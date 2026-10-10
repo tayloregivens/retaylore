@@ -1,0 +1,21 @@
+import React, { useState } from 'react';
+import { ShieldCheck, ArrowRight, Loader2, FileCheck2, FlaskConical } from 'lucide-react';
+import GuardianSidebar from '@/components/guardian/GuardianSidebar';
+import GuardianHeader from '@/components/guardian/GuardianHeader';
+import GuardianStats from '@/components/guardian/GuardianStats';
+import RiskSummary from '@/components/guardian/RiskSummary';
+import PaymentsPanel from '@/components/guardian/PaymentsPanel';
+import ImportDialog from '@/components/guardian/ImportDialog';
+import useGuardian from '@/components/guardian/useGuardian';
+export default function PaymentGuardian() {
+  const guardian = useGuardian(); const [upload, setUpload] = useState(false); const [filter, setFilter] = useState('all');
+  const sample = () => { guardian.useSample(); setFilter('all'); };
+  return <div className="min-h-screen font-body"><GuardianSidebar filter={filter} setFilter={setFilter} onUpload={() => setUpload(true)} onSample={sample} user={guardian.user} /><main className="lg:ml-60"><GuardianHeader sample={guardian.sample} onUpload={() => setUpload(true)} onSample={sample} /><div className="px-5 md:px-10 pb-8 max-w-[1800px] mx-auto">
+    {guardian.error ? <section role="alert" className="rounded-xl border bg-card p-8"><h2 className="font-semibold">We couldn’t load this payment batch</h2><p className="text-sm text-destructive mt-2">{guardian.error.response?.data?.error || guardian.error.message}</p><button onClick={guardian.retry} className="text-sm text-primary mt-4 mr-4">Try again</button><button onClick={sample} className="text-sm text-primary">Open sample data</button></section> : guardian.loading ? <div className="py-32 flex flex-col items-center text-muted-foreground gap-4"><Loader2 className="animate-spin text-primary" size={28} /><p className="text-sm">Checking invoices and historical amounts…</p></div> : guardian.data && <>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-5 text-[11px]"><div className="flex items-center gap-2 text-muted-foreground">{guardian.sample ? <FlaskConical size={14} /> : <FileCheck2 size={14} />}<span>{guardian.sample ? 'Sample workspace' : guardian.batch?.name} <span className="mx-1">/</span> {guardian.data.history.length} historical records · {guardian.data.payments.length} pending payments</span></div><span className="text-success flex items-center gap-1.5"><ShieldCheck size={13} />Deterministic analysis complete</span></div>
+      <GuardianStats stats={guardian.data.stats} /><div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-success-soft border border-primary/10 rounded-xl p-4 md:px-5 mb-7"><span className="p-2 rounded-lg bg-card text-primary self-start"><ShieldCheck size={22} /></span><div className="flex-1"><p className="text-sm font-medium">{guardian.data.stats.flagged ? `${guardian.data.stats.flagged} payments deserve a second look.` : 'No duplicate or unusual-amount flags in this batch.'}</p><p className="text-xs text-muted-foreground mt-1">{guardian.data.stats.insufficient ? `${guardian.data.stats.insufficient} payments have limited vendor history. ` : ''}Review the evidence before making your next move.</p></div><button onClick={() => setFilter('flagged')} className="flex items-center gap-2 text-xs font-semibold text-primary">Review flagged <ArrowRight size={14} /></button></div>
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_260px] gap-5 items-start"><PaymentsPanel key={guardian.batchId} data={guardian.data} userId={guardian.user.id} batchId={guardian.batchId} filter={filter} setFilter={setFilter} /><RiskSummary stats={guardian.data.stats} setFilter={setFilter} /></div>
+      <footer className="mt-6 flex flex-wrap justify-between gap-2 text-[10px] text-muted-foreground"><span className="flex items-center gap-1.5"><ShieldCheck size={12} />Private CSV storage. No real transactions.</span><span>Payment Guardian · All decisions are simulated</span></footer>
+    </>}
+  </div></main><ImportDialog key={upload ? 'open' : 'closed'} open={upload} onClose={() => setUpload(false)} onImported={(batch, data) => { guardian.useImport(batch, data); setFilter('all'); }} sampleFiles={guardian.data?.sampleFiles} /></div>;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "GuardianBatch",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "history_uri": {
+      "type": "string"
+    },
+    "pending_uri": {
+      "type": "string"
+    },
+    "history_name": {
+      "type": "string"
+    },
+    "pending_name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "history_uri",
+    "pending_uri"
+  ]
+}

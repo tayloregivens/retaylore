@@ -1,0 +1,7 @@
+import React from 'react';
+import { Wallet, Flag, CircleDollarSign, ShieldCheck, ArrowUpRight } from 'lucide-react';
+import { money } from '@/components/guardian/format';
+export default function GuardianStats({ stats }) {
+  const cards = [{ label: 'Pending payments', value: stats.total, note: `${money(stats.totalAmount)} in this batch`, icon: Wallet }, { label: 'Flagged payments', value: stats.flagged, note: 'Potential issues to look into', icon: Flag, warning: true }, { label: 'Amount to review', value: money(stats.flaggedAmount), note: 'Flagged payments, counted once', icon: CircleDollarSign, warning: true }, { label: 'No issues detected', value: stats.clear, note: 'Passed all available checks', icon: ShieldCheck }];
+  return <section aria-label="Payment summary" className="grid grid-cols-2 xl:grid-cols-4 gap-3 md:gap-5 mb-6">{cards.map(({ label, value, note, icon: Icon, warning }) => <div key={label} className="bg-card border rounded-xl p-4 md:p-5 shadow-sm"><div className="flex justify-between items-center gap-1"><p className="text-xs text-muted-foreground font-medium">{label}</p><Icon size={17} className={warning ? 'text-warning' : 'text-primary'} /></div><div className="mt-5 mb-2 text-2xl md:text-3xl font-semibold tracking-tight tabular-nums">{value}</div><p className="text-[10px] md:text-xs text-muted-foreground flex items-center gap-1">{!warning && <ArrowUpRight size={12} />}{note}</p></div>)}</section>;
+}

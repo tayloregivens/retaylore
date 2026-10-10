@@ -11,6 +11,15 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+            success: 'hsl(var(--success))',
+            'success-soft': 'hsl(var(--success-soft))',
+            warning: 'hsl(var(--warning))',
+            'warning-soft': 'hsl(var(--warning-soft))',
+            'danger-soft': 'hsl(var(--danger-soft))',
+            nav: 'hsl(var(--nav))',
+            'nav-foreground': 'hsl(var(--nav-foreground))',
+            'nav-muted': 'hsl(var(--nav-muted))',
+            'nav-accent': 'hsl(var(--nav-accent))',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

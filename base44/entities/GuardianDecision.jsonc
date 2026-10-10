@@ -1,0 +1,29 @@
+{
+  "name": "GuardianDecision",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "batch_id": {
+      "type": "string"
+    },
+    "payment_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Approved",
+        "On Hold",
+        "Needs Investigation"
+      ]
+    }
+  },
+  "required": [
+    "owner_id",
+    "batch_id",
+    "payment_id",
+    "status"
+  ]
+}
