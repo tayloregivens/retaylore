@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import usePaymentInvestigation from '@/components/guardian/usePaymentInvestigation';
+import InvestigationContextBar from '@/components/guardian/InvestigationContextBar';
+import { investigationPrompt } from '@/components/guardian/investigationContext';
 import { Send, Plus, MessageSquare, Bot, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,21 +20,28 @@ export default function PaymentAdvisor() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const scrollRef = useRef(null);
+  const navigate = useNavigate();
+  const investigation = usePaymentInvestigation();
 
   const loadConversations = useCallback(async () => {
+    if (investigation.loading) return;
     try {
       const result = await base44.agents.listConversations({ agent_name: AGENT_NAME });
       const list = result?.items || result || [];
       setConversations(list);
-      if (list.length > 0) {
-        setActiveId(list[0].id);
+      if (investigation.id) {
+        const selected = list.find(c => c.metadata?.payment_investigation_id === investigation.id);
+        setActiveId(selected?.id || null);
+        setMessages(selected ? (await base44.agents.getConversation(selected.id)).messages || [] : []);
+      } else if (list.length > 0) {
+        setActiveId(current => list.some(c => c.id === current) ? current : list[0].id);
       }
     } catch {
       /* no conversations yet */
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [investigation.id, investigation.loading]);
 
   useEffect(() => { loadConversations(); }, [loadConversations]);
 
@@ -50,7 +60,7 @@ export default function PaymentAdvisor() {
   const newConversation = async () => {
     const conv = await base44.agents.createConversation({
       agent_name: AGENT_NAME,
-      metadata: { name: 'New advisor chat', description: 'New advisor chat' }
+      metadata: { name: 'New advisor chat', description: 'New advisor chat', ...(investigation.record ? { payment_investigation_id: investigation.record.id } : {}) }
     });
     setConversations(prev => [conv, ...prev]);
     setActiveId(conv.id);
@@ -59,22 +69,26 @@ export default function PaymentAdvisor() {
 
   const send = async () => {
     const text = input.trim();
-    if (!text || sending) return;
+    if (!text || sending || loading || investigation.loading || investigation.error) return;
     setInput('');
     setSending(true);
     setMessages(prev => [...prev, { role: 'user', content: text }]);
 
     try {
       let conv = conversations.find(c => c.id === activeId);
+      if (investigation.id && conv?.metadata?.payment_investigation_id !== investigation.id) conv = null;
       if (!conv) {
         conv = await base44.agents.createConversation({
           agent_name: AGENT_NAME,
-          metadata: { name: text.slice(0, 50), description: text.slice(0, 50) }
+          metadata: { name: text.slice(0, 50), description: text.slice(0, 50), ...(investigation.record ? { payment_investigation_id: investigation.record.id } : {}) }
         });
         setConversations(prev => [conv, ...prev]);
         setActiveId(conv.id);
       }
-      await base44.agents.addMessage(conv, { role: 'user', content: text });
+      const latest = investigation.id ? await investigation.retry() : null;
+      if (investigation.id && (latest.error || !latest.data)) throw latest.error || new Error('Could not load payment context.');
+      const context = latest?.data ? investigationPrompt(latest.data) : '';
+      await base44.agents.addMessage(conv, { role: 'user', content: context + text });
     } catch {
       setInput(text);
       setMessages(prev => prev.slice(0, -1));
@@ -103,7 +117,7 @@ export default function PaymentAdvisor() {
             {conversations.map(c => (
               <button
                 key={c.id}
-                onClick={() => setActiveId(c.id)}
+                onClick={() => { navigate(c.metadata?.payment_investigation_id ? `/advisor?investigation=${encodeURIComponent(c.metadata.payment_investigation_id)}` : '/advisor'); setActiveId(c.id); }}
                 className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left transition-colors ${c.id === activeId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
               >
                 <MessageSquare size={14} className="shrink-0" />
@@ -121,6 +135,7 @@ export default function PaymentAdvisor() {
           <h1 className="text-sm font-semibold">Payment Advisor</h1>
           <span className="text-xs text-muted-foreground hidden sm:inline">Your AI finance assistant</span>
         </header>
+        <InvestigationContextBar investigation={investigation} page="advisor" />
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading ? (
@@ -149,10 +164,10 @@ export default function PaymentAdvisor() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
               placeholder="Ask about your payments or give me a guideline to follow..."
-              disabled={sending}
+              disabled={sending || loading || investigation.loading || !!investigation.error}
               className="flex-1"
             />
-            <Button onClick={send} disabled={sending || !input.trim()}>
+            <Button onClick={send} disabled={sending || !input.trim() || loading || investigation.loading || !!investigation.error}>
               {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             </Button>
           </div>

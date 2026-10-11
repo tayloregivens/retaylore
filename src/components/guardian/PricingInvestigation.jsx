@@ -4,15 +4,20 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { money } from '@/components/guardian/format';
 import PricingFindings from '@/components/guardian/PricingFindings';
+import { savePaymentContext } from '@/components/guardian/investigationContext';
 export default function PricingInvestigation({ payment, batchId, onBack }) {
   const [result, setResult] = useState(null), [error, setError] = useState(''), [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let active = true;
     setResult(null); setError('');
-    base44.functions.invoke('investigateGuardianPricing', { batchId, paymentId: payment.payment_id }).then(({ data }) => {
-      if (!active) return;
-      if (data.error) setError(data.error); else setResult(data);
-    }).catch(e => { if (active) setError(e.response?.data?.error || e.message || 'Could not connect to Bright Data.'); });
+    base44.functions.invoke('investigateGuardianPricing', { batchId, paymentId: payment.payment_id }).then(async ({ data }) => {
+      if (data.error) { if (active) setError(data.error); return; }
+      if (active) setResult(data);
+      if (data.findings?.length) {
+        const record = await savePaymentContext(payment, batchId);
+        await base44.entities.GuardianInvestigation.update(record.id, { research: { provider: 'Bright Data', success: true, result_count: data.findings.length, results: data.results, queries: data.queries, warnings: data.warnings }, researched_at: data.retrievedAt });
+      }
+    }).catch(e => { if (active) setError(e.data?.error || e.response?.data?.error || e.message || 'Could not connect to Bright Data.'); });
     return () => { active = false; };
   }, [batchId, payment.payment_id, attempt]);
   return <section className="border rounded-lg p-4 space-y-4" aria-label="Pricing investigation">
