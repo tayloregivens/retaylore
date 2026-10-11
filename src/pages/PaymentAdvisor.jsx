@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
+import { Link } from 'react-router-dom';
 import { Send, Plus, MessageSquare, Bot, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,6 +117,7 @@ export default function PaymentAdvisor() {
       <main className="flex-1 flex flex-col min-w-0">
         <header className="border-b px-4 py-3 flex items-center gap-2">
           <Bot size={18} className="text-primary shrink-0" />
+          <Link to="/" className="text-xs text-primary underline mr-2">Payment dashboard</Link>
           <h1 className="text-sm font-semibold">Payment Advisor</h1>
           <span className="text-xs text-muted-foreground hidden sm:inline">Your AI finance assistant</span>
         </header>
