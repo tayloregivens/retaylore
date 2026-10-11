@@ -4,8 +4,27 @@
   "tool_configs": [
     {
       "function_name": "extractWebData",
-      "description": "Fetch a web page's content via Bright Data Web Unlocker. Parameters: url (required string), zone (optional, default 'web_unlocker1'), format (optional, default 'raw'). Returns the page content, content_length, and whether it was truncated."
+      "description": "Fetch a web page's content via Bright Data Web Unlocker so the agent can extract data from it"
     }
   ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "emails_settings": null,
+  "allow_anonymous_access": false,
   "name": "data_extractor"
 }
