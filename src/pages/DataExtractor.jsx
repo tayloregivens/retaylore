@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Send, Plus, MessageSquare, Globe, Loader2 } from 'lucide-react';
+import { Send, Plus, MessageSquare, Globe, Loader2, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -114,7 +115,8 @@ export default function DataExtractor() {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="border-b px-4 py-3 flex items-center gap-2">
+        <header className="border-b px-4 py-3 flex items-center gap-2 flex-wrap">
+          <Button asChild variant="outline" size="sm"><Link to="/"><ArrowLeft size={16} />Back to dashboard</Link></Button>
           <Globe size={18} className="text-primary shrink-0" />
           <h1 className="text-sm font-semibold">Web Data Extractor</h1>
           <span className="text-xs text-muted-foreground hidden sm:inline">Powered by Bright Data</span>
