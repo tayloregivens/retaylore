@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import MessageBubble from '@/components/agent/MessageBubble';
+import BrightDataMessage from '@/components/agent/BrightDataMessage';
 
 const AGENT_NAME = 'data_extractor';
 
@@ -131,12 +131,12 @@ export default function DataExtractor() {
             <div className="flex flex-col items-center justify-center h-full text-center space-y-3 px-4">
               <Globe size={40} className="text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground max-w-md">
-                Ask me to extract data from any web page. For example: &ldquo;Extract all product names and prices from https://example.com/store&rdquo;
+                Search the web using Bright Data only. For example: &ldquo;Figma official pricing plans&rdquo;
               </p>
             </div>
           ) : (
             <>
-              {messages.map((m, i) => <MessageBubble key={i} message={m} />)}
+              {messages.map((m, i) => <BrightDataMessage key={i} message={m} messages={messages} index={i} />)}
               <div ref={scrollRef} />
             </>
           )}
@@ -148,7 +148,7 @@ export default function DataExtractor() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Paste a URL and describe what data to extract..."
+              placeholder="Enter a search query, such as Figma official pricing plans..."
               disabled={sending}
               className="flex-1"
             />
