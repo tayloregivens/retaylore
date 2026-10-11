@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import BrightDataMessage from '@/components/agent/BrightDataMessage';
+import ResearchFeedback from '@/components/guardian/ResearchFeedback';
 
 const AGENT_NAME = 'data_extractor';
 
@@ -67,8 +68,8 @@ export default function DataExtractor() {
     setMessages([]);
   };
 
-  const send = async () => {
-    const text = input.trim();
+  const send = async retryText => {
+    const text = (typeof retryText === 'string' ? retryText : input).trim();
     if (!text || sending) return;
     if (investigation.id) {
       if (!investigation.record || investigation.loading || investigation.error) return;
@@ -140,7 +141,7 @@ export default function DataExtractor() {
           <span className="text-xs text-muted-foreground hidden sm:inline">Powered by Bright Data</span>
         </header>
         <InvestigationContextBar investigation={investigation} page="extractor" />
-        {investigation.research.isError && <p role="alert" className="px-4 py-2 text-sm text-destructive">{investigation.research.error.response?.data?.error || investigation.research.error.message} No new findings were saved.</p>}
+        {investigation.research.isError && displayedMessages.length > 0 && <div className="p-4"><ResearchFeedback investigation={investigation} sending={sending} onRetry={() => send(investigation.research.variables)} /></div>}
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {loading || investigation.loading ? (
@@ -148,12 +149,7 @@ export default function DataExtractor() {
               <Loader2 className="animate-spin text-muted-foreground" />
             </div>
           ) : displayedMessages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-3 px-4">
-              <Globe size={40} className="text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground max-w-md">
-                Search the web using Bright Data only. For example: &ldquo;Figma official pricing plans&rdquo;
-              </p>
-            </div>
+            <ResearchFeedback investigation={investigation} sending={sending} onRetry={() => send(investigation.research.variables)} empty />
           ) : (
             <>
               {displayedMessages.map((m, i) => <BrightDataMessage key={i} message={m} messages={displayedMessages} index={i} />)}
@@ -168,7 +164,7 @@ export default function DataExtractor() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Enter a search query, such as Figma official pricing plans..."
+              placeholder={investigation.id ? `Search ${investigation.record?.payment?.vendor || 'vendor'} pricing...` : 'Enter a vendor or pricing search query...'}
               disabled={sending || investigation.loading || !!investigation.error}
               className="flex-1"
             />

@@ -24,5 +24,5 @@ export function investigationPrompt(record) {
 
 export function researchRequest(record) {
   const p = record.payment;
-  return `${p.vendor} official pricing plans. Payment ${p.payment_id}: ${p.amount} USD; historical median ${p.median ?? 'unavailable'} USD from ${p.historyCount} charges; threshold ${p.threshold ?? 'unavailable'} USD; ratio ${p.ratio ?? 'unavailable'}. Risk: ${record.risk_reason}`;
+  return `${p.vendor} official pricing plans`;
 }

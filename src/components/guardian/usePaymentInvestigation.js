@@ -15,7 +15,11 @@ export default function usePaymentInvestigation() {
   } });
   const research = useMutation({ mutationFn: async text => {
     const { data } = await base44.functions.invoke('extractWebData', { query: text.slice(0, 1000) });
-    if (data?.provider !== 'Bright Data' || data.success !== true || !data.results?.length) throw new Error(data?.error || 'No usable Bright Data results found.');
+    if (data?.provider !== 'Bright Data' || data.success !== true || !data.results?.length) {
+      const error = new Error(data?.error || 'No usable Bright Data results found.');
+      error.response = { data };
+      throw error;
+    }
     return base44.entities.GuardianInvestigation.update(id, { research: data, researched_at: new Date().toISOString() });
   }, onSuccess: record => client.setQueryData(key, record) });
   return { id, record: query.data, loading: !!id && query.isPending, error: query.error, retry: query.refetch, research };

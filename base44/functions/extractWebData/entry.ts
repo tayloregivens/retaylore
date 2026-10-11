@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.52';
 import { secrets } from 'base44:runtime';
+import { brightDataRequest, brightDataFailure } from '../../shared/brightDataRequest.ts';
 
 export default async function(req: Request): Promise<Response> {
   try {
@@ -48,26 +49,10 @@ export default async function(req: Request): Promise<Response> {
     }
 
     const payload: Record<string, string> = { zone, url, format: legacy ? format : 'raw' };
-    payload.data_format = legacy ? dataFormat : 'parsed_light';
-
-    const response = await fetch('https://api.brightdata.com/request', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(120000),
-    });
-
-    console.info('Bright Data response', { status: response.status, contentType: response.headers.get('content-type'), mode: legacy ? 'legacy' : 'brd_json=1' });
-    if (!response.ok) {
-      const apiError = (await response.text()).replaceAll(apiKey, '[redacted]').slice(0, 500);
-      console.error('Bright Data API error', { status: response.status, contentType: response.headers.get('content-type'), message: apiError });
-      return Response.json({ success: false, provider: 'Bright Data', request_succeeded: false, result_count: 0, error: `Bright Data request failed (${response.status}). No fallback search was used.`, details: apiError }, { status: 502 });
-    }
-
-    const text = await response.text();
+    if (legacy) payload.data_format = dataFormat;
+    const result = await brightDataRequest(apiKey, payload);
+    if (!result.ok) return Response.json(brightDataFailure(result), { status: 502 });
+    const text = result.text;
     if (!legacy) {
       let parsed;
       try { parsed = JSON.parse(text); } catch {
