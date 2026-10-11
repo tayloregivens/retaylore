@@ -30,7 +30,7 @@ export default function InvestigateEmailDialog({ payment, batchId, onClose }) {
         if (data.error) { setResearch({ state: 'error', message: data.error }); return; }
         setDraft(data.draft);
         setSources(data.sources || []);
-        setResearch({ state: 'done', query: data.query });
+        setResearch({ state: 'done', query: data.query, warning: data.searchWarning || '' });
       })
       .catch(e => { if (active) setResearch({ state: 'error', message: e?.response?.data?.error || e?.data?.error || e?.message || 'Research failed. You can still edit the template draft.' }); });
     return () => { active = false; };
@@ -72,6 +72,12 @@ export default function InvestigateEmailDialog({ payment, batchId, onClose }) {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+        {focus === 'negotiate' && research.state === 'done' && sources.length === 0 && (
+          <div className="border-t pt-3 flex items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">Bright Data returned no results{research.warning ? `: ${research.warning}` : ''}. The draft was written from the payment context only.</p>
+            <Button size="sm" variant="outline" onClick={() => setRetryKey(k => k + 1)}><RefreshCw size={12} className="mr-1.5" />Retry research</Button>
           </div>
         )}
         {focus === 'negotiate' && research.state === 'error' && (
