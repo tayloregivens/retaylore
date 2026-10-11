@@ -15,6 +15,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import OAuthConsent from '@/pages/OAuthConsent';
 import DataExtractor from '@/pages/DataExtractor';
+import PaymentAdvisor from '@/pages/PaymentAdvisor';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -50,6 +51,7 @@ const AuthenticatedApp = () => {
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route path="/" element={<PaymentGuardian />} />
         <Route path="/extractor" element={<DataExtractor />} />
+        <Route path="/advisor" element={<PaymentAdvisor />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
