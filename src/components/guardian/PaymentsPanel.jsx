@@ -4,10 +4,11 @@ import PaymentToolbar from '@/components/guardian/PaymentToolbar';
 import PaymentTable from '@/components/guardian/PaymentTable';
 import PaymentDetailDialog from '@/components/guardian/PaymentDetailDialog';
 import BulkActionsDialog from '@/components/guardian/BulkActionsDialog';
+import EmailDraftDialog from '@/components/guardian/EmailDraftDialog';
 import usePaymentDecisions from '@/components/guardian/usePaymentDecisions';
 export default function PaymentsPanel({ data, userId, batchId, filter, setFilter }) {
   const [search, setSearch] = useState(''); const [page, setPage] = useState(1); const [selected, setSelected] = useState(null);
-  const [selectedIds, setSelectedIds] = useState(() => new Set()); const [bulkOpen, setBulkOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set()); const [bulkOpen, setBulkOpen] = useState(false); const [emailDraft, setEmailDraft] = useState(null);
   const term = search.trim().toLowerCase();
   const filtered = data.payments.filter(p => {
     const riskMatch = filter === 'all' || (filter === 'flagged' && p.flags.length > 0) || p.flags.includes(filter) || (filter === 'insufficient' && p.insufficient) || (filter === 'clear' && !p.flags.length && !p.insufficient);
@@ -31,6 +32,7 @@ export default function PaymentsPanel({ data, userId, batchId, filter, setFilter
     {selectedPayments.length > 0 && <div className="flex items-center gap-3 bg-primary/5 border-b px-5 py-2.5"><span className="text-xs font-medium text-primary">{selectedPayments.length} selected</span><button onClick={() => setBulkOpen(true)} className="flex items-center gap-1.5 text-xs font-semibold bg-primary text-primary-foreground rounded-lg px-3 py-1.5 hover:bg-primary/90 transition-colors"><Zap size={13} />Do something about this</button><button onClick={() => setSelectedIds(new Set())} className="text-xs text-muted-foreground hover:text-foreground ml-auto">Clear</button></div>}
     <PaymentTable rows={rows} decisions={decisions.records} onSelect={payment => { decisions.save.reset(); setSelected(payment); }} page={current} pages={pages} setPage={setPage} count={filtered.length} loading={decisions.loading || !!decisions.error} onClear={() => { setSearch(''); setFilter('all'); setPage(1); }} selectedIds={selectedIds} onToggleSelect={toggleSelect} onToggleSelectAll={toggleSelectAll} />
     {selected && <PaymentDetailDialog key={selected.payment_id} payment={selected} analysis={data} batchId={batchId} status={decisions.records[selected.payment_id] || selected.status} save={decisions.save} loading={decisions.loading || !!decisions.error} onClose={() => setSelected(null)} />}
-    <BulkActionsDialog open={bulkOpen} selected={selectedPayments} onClose={() => setBulkOpen(false)} onClear={() => { setSelectedIds(new Set()); setBulkOpen(false); }} />
+    <BulkActionsDialog open={bulkOpen} selected={selectedPayments} onClose={() => setBulkOpen(false)} onClear={() => { setSelectedIds(new Set()); setBulkOpen(false); }} onDraftAction={(payment, action) => { setBulkOpen(false); setEmailDraft({ payment, action }); }} />
+    {emailDraft && <EmailDraftDialog payment={emailDraft.payment} action={emailDraft.action} batchId={batchId} onClose={() => setEmailDraft(null)} />}
   </section>;
 }

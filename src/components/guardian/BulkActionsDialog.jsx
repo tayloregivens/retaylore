@@ -21,7 +21,7 @@ function recommendActions(p) {
   return actions;
 }
 
-export default function BulkActionsDialog({ open, selected, onClose, onClear }) {
+export default function BulkActionsDialog({ open, selected, onClose, onClear, onDraftAction }) {
   const total = selected.reduce((sum, p) => sum + (p.amount || 0), 0);
 
   const { perPayment, actionCounts } = useMemo(() => {
@@ -63,7 +63,7 @@ export default function BulkActionsDialog({ open, selected, onClose, onClear }) 
               <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t">
                 {actions.map(a => {
                   const { icon: Icon, label } = ACTION_META[a];
-                  return <span key={a} className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 text-primary px-2 py-1 text-[11px] font-medium"><Icon size={12} />{label}</span>;
+                  return <button key={a} onClick={() => onDraftAction(p, a)} className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 text-primary px-2 py-1 text-[11px] font-medium hover:bg-primary hover:text-primary-foreground transition-colors"><Icon size={12} />{label}</button>;
                 })}
               </div>
             </div>
