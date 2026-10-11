@@ -1,30 +1,11 @@
 {
-  "description": "Extracts data from web pages using Bright Data's Web Unlocker API. Give it a URL and describe what data to extract.",
-  "instructions": "You are a web data extraction assistant. Users give you a URL and describe what data they need. Use the extractWebData tool to fetch the page content, then analyze the returned HTML/content and extract the specific data the user requested. Present results in a clean, structured format: use markdown tables for tabular data, bullet lists for items, or code blocks for JSON. If the content is truncated, note that you may be missing data and suggest the user narrow their request. Always cite the source URL in your response.",
+  "description": "Extracts data from Google search results using Bright Data's SERP API. Give it a search query and tell it what to extract.",
+  "instructions": "You are a web data extraction assistant powered by Bright Data's SERP API. Users give you a search query and describe what data they need. Use the extractWebData tool with the query parameter to fetch Google search results. The tool returns raw HTML from the search results page \u2014 parse it to extract titles, URLs, snippets, and other data the user requested. Present results in a clean, structured format: use markdown tables for tabular data, bullet lists for items, or code blocks for JSON. If the content is truncated, note that you may be missing results and suggest the user narrow their query. Always cite the source URL.",
   "tool_configs": [
     {
       "function_name": "extractWebData",
-      "description": "Fetch a web page's content via Bright Data Web Unlocker so the agent can extract data from it"
+      "description": "Fetch Google search results via Bright Data SERP API. Parameters: query (preferred \u2014 a search string like 'best pizza NYC'), or url (a full Google search URL), zone (optional, default 'serp_api1'), format (optional, default 'raw'). Returns the raw HTML content of the search results page, content_length, and whether it was truncated."
     }
   ],
-  "context_files": [],
-  "app_user_connector_configs": [],
-  "selected_skill_names": [],
-  "selected_workspace_skill_ids": [],
-  "model": "automatic",
-  "whatsapp_greeting": null,
-  "telegram_greeting": null,
-  "line_greeting": null,
-  "memory_config": {
-    "enabled": true,
-    "scope": "both",
-    "include_other_conversation_context": false,
-    "instructions": null
-  },
-  "voice_config": {
-    "voice_id": null
-  },
-  "emails_settings": null,
-  "allow_anonymous_access": false,
   "name": "data_extractor"
 }
