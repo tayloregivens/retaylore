@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, Mail, X, Ban, Handshake } from 'lucide-react';
+import { Loader2, Mail, Ban, Handshake } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ export default function InvestigateEmailDialog({ payment, batchId, onClose }) {
   const [draft, setDraft] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -19,10 +20,10 @@ export default function InvestigateEmailDialog({ payment, batchId, onClose }) {
     base44.functions.invoke('draftVendorEmail', { batchId, paymentId: payment.payment_id, focus }).then(({ data }) => {
       if (!active) return;
       if (data.error) { setError(data.error); setDraft(null); } else setDraft(data);
-    }).catch(e => { if (active) setError(e.response?.data?.error || e.data?.error || 'Could not generate the email draft.'); })
+    }).catch(e => { if (!active) return; setError(e?.response?.data?.error || e?.data?.error || e?.message || 'Could not generate the email draft. Please try again.'); })
       .finally(() => { if (active) setBusy(false); });
     return () => { active = false; };
-  }, [batchId, payment.payment_id, focus]);
+  }, [batchId, payment.payment_id, focus, retryKey]);
 
   return (
     <Dialog open onOpenChange={v => { if (!v && !busy) onClose(); }}>
@@ -32,7 +33,6 @@ export default function InvestigateEmailDialog({ payment, batchId, onClose }) {
             <DialogTitle className="text-lg flex items-center gap-2"><Mail size={18} />Investigate · Vendor email draft</DialogTitle>
             <DialogDescription>{payment.vendor} · {payment.payment_id} · {money(payment.amount)}</DialogDescription>
           </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={busy} onClick={onClose}><X size={16} /></Button>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -43,7 +43,7 @@ export default function InvestigateEmailDialog({ payment, batchId, onClose }) {
         {busy ? (
           <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center"><Loader2 size={16} className="animate-spin" />Drafting {FOCUS_LABELS[focus].toLowerCase()} email…</p>
         ) : error ? (
-          <p role="alert" className="text-sm text-destructive py-4">{error}</p>
+          <div role="alert" className="py-4 space-y-3"><p className="text-sm text-destructive">{error}</p><Button size="sm" variant="outline" disabled={busy} onClick={() => setRetryKey(k => k + 1)}><Loader2 size={14} className="mr-2" />Retry</Button></div>
         ) : draft && (
           <div className="space-y-3 text-sm">
             <div className="flex gap-2 items-center"><span className="text-muted-foreground w-16 shrink-0">To</span><span className="font-mono text-xs bg-muted px-2 py-1 rounded">{draft.recipient}</span></div>
