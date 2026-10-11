@@ -1,0 +1,37 @@
+{
+  "name": "GuardianInvestigation",
+  "type": "object",
+  "properties": {
+    "owner_id": {
+      "type": "string"
+    },
+    "batch_id": {
+      "type": "string"
+    },
+    "payment_id": {
+      "type": "string"
+    },
+    "payment": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "risk_reason": {
+      "type": "string"
+    },
+    "research": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "researched_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "owner_id",
+    "batch_id",
+    "payment_id",
+    "payment",
+    "risk_reason"
+  ]
+}

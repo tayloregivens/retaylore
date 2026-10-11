@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Send, Plus, MessageSquare, Globe, Loader2, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import usePaymentInvestigation from '@/components/guardian/usePaymentInvestigation';
+import InvestigationContextBar from '@/components/guardian/InvestigationContextBar';
+import { researchRequest } from '@/components/guardian/investigationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,37 +20,44 @@ export default function DataExtractor() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const scrollRef = useRef(null);
+  const navigate = useNavigate();
+  const investigation = usePaymentInvestigation();
+  useEffect(() => {
+    if (investigation.record) setInput(researchRequest(investigation.record));
+  }, [investigation.record?.id]);
+  const displayedMessages = investigation.id ? (investigation.record?.research ? [{ role: 'assistant', tool_calls: [{ name: 'extractWebData', status: 'completed', results: investigation.record.research }] }] : []) : messages;
 
   const loadConversations = useCallback(async () => {
     try {
       const result = await base44.agents.listConversations({ agent_name: AGENT_NAME });
       const list = result?.items || result || [];
       setConversations(list);
-      if (list.length > 0) {
-        setActiveId(list[0].id);
+      if (!investigation.id && list.length > 0) {
+        setActiveId(current => list.some(c => c.id === current) ? current : list[0].id);
       }
     } catch {
       /* no conversations yet */
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [investigation.id]);
 
   useEffect(() => { loadConversations(); }, [loadConversations]);
 
   useEffect(() => {
-    if (!activeId) return;
+    if (!activeId || investigation.id) return;
     const unsubscribe = base44.agents.subscribeToConversation(activeId, (data) => {
       setMessages(data?.messages || []);
     });
     return () => unsubscribe();
-  }, [activeId]);
+  }, [activeId, investigation.id]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const newConversation = async () => {
+    navigate('/extractor');
     const conv = await base44.agents.createConversation({
       agent_name: AGENT_NAME,
       metadata: { name: 'New extraction', description: 'New extraction' }
@@ -60,6 +70,14 @@ export default function DataExtractor() {
   const send = async () => {
     const text = input.trim();
     if (!text || sending) return;
+    if (investigation.id) {
+      if (!investigation.record || investigation.loading || investigation.error) return;
+      setSending(true);
+      try { await investigation.research.mutateAsync(text); setInput(''); }
+      catch { /* The research error is displayed below; keep the request for retry. */ }
+      finally { setSending(false); }
+      return;
+    }
     setInput('');
     setSending(true);
     setMessages(prev => [...prev, { role: 'user', content: text }]);
@@ -103,7 +121,7 @@ export default function DataExtractor() {
             {conversations.map(c => (
               <button
                 key={c.id}
-                onClick={() => setActiveId(c.id)}
+                onClick={() => { navigate('/extractor'); setActiveId(c.id); }}
                 className={`flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm text-left transition-colors ${c.id === activeId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'}`}
               >
                 <MessageSquare size={14} className="shrink-0" />
@@ -121,13 +139,15 @@ export default function DataExtractor() {
           <h1 className="text-sm font-semibold">Web Data Extractor</h1>
           <span className="text-xs text-muted-foreground hidden sm:inline">Powered by Bright Data</span>
         </header>
+        <InvestigationContextBar investigation={investigation} page="extractor" />
+        {investigation.research.isError && <p role="alert" className="px-4 py-2 text-sm text-destructive">{investigation.research.error.response?.data?.error || investigation.research.error.message} No new findings were saved.</p>}
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {loading ? (
+          {loading || investigation.loading ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="animate-spin text-muted-foreground" />
             </div>
-          ) : messages.length === 0 ? (
+          ) : displayedMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-3 px-4">
               <Globe size={40} className="text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground max-w-md">
@@ -136,7 +156,7 @@ export default function DataExtractor() {
             </div>
           ) : (
             <>
-              {messages.map((m, i) => <BrightDataMessage key={i} message={m} messages={messages} index={i} />)}
+              {displayedMessages.map((m, i) => <BrightDataMessage key={i} message={m} messages={displayedMessages} index={i} />)}
               <div ref={scrollRef} />
             </>
           )}
@@ -149,10 +169,10 @@ export default function DataExtractor() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
               placeholder="Enter a search query, such as Figma official pricing plans..."
-              disabled={sending}
+              disabled={sending || investigation.loading || !!investigation.error}
               className="flex-1"
             />
-            <Button onClick={send} disabled={sending || !input.trim()}>
+            <Button onClick={send} disabled={sending || !input.trim() || investigation.loading || !!investigation.error} aria-label={investigation.id ? 'Research Vendor with Bright Data' : 'Send extraction request'}>
               {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
             </Button>
           </div>
