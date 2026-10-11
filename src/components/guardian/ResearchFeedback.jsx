@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 export default function ResearchFeedback({ investigation, sending, onRetry, empty = false }) {
   const error = investigation.research.error;
-  const response = error?.response?.data;
+  const response = error?.data || error?.response?.data;
   const details = response?.details;
   const vendor = investigation.record?.payment?.vendor;
   if (investigation.research.isError) return <div role="alert" className="rounded-lg border bg-card p-4 space-y-3 text-sm">

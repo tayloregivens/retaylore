@@ -15,9 +15,9 @@ export default function PricingInvestigation({ payment, batchId, onBack }) {
       if (active) setResult(data);
       if (data.findings?.length) {
         const record = await savePaymentContext(payment, batchId);
-        await base44.entities.GuardianInvestigation.update(record.id, { research: { provider: 'Bright Data', success: true, result_count: data.findings.length, results: data.findings.map(f => ({ title: f.title, url: f.url, description: f.snippet, pricing: [], search: f.search })), queries: data.queries, warnings: data.warnings }, researched_at: data.retrievedAt });
+        await base44.entities.GuardianInvestigation.update(record.id, { research: { provider: 'Bright Data', success: true, result_count: data.findings.length, results: data.results, queries: data.queries, warnings: data.warnings }, researched_at: data.retrievedAt });
       }
-    }).catch(e => { if (active) setError(e.response?.data?.error || e.message || 'Could not connect to Bright Data.'); });
+    }).catch(e => { if (active) setError(e.data?.error || e.response?.data?.error || e.message || 'Could not connect to Bright Data.'); });
     return () => { active = false; };
   }, [batchId, payment.payment_id, attempt]);
   return <section className="border rounded-lg p-4 space-y-4" aria-label="Pricing investigation">
